@@ -1,0 +1,53 @@
+export interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  isActive: boolean; // Soft-deactivation safety
+  createdAt: string;
+}
+
+export interface Expense {
+  id: string;
+  amount: number;
+  categoryId: string;
+  categoryName?: string;
+  categoryIcon?: string;
+  categoryColor?: string;
+  date: string; // YYYY-MM-DD
+  monthKey: string; // YYYY-MM
+  note?: string;
+  createdAt: string;
+}
+
+export interface CategorySummary {
+  categoryId: string;
+  categoryName: string;
+  categoryIcon: string;
+  categoryColor: string;
+  totalAmount: number;
+  percentage: number;
+  transactionCount: number;
+}
+
+export interface MonthlySummary {
+  monthKey: string; // e.g. "2026-10"
+  monthLabel: string; // e.g. "October 2026"
+  totalSpent: number;
+  transactionCount: number;
+  dailyAverage: number;
+  daysInMonth: number;
+  highestCategory?: {
+    name: string;
+    amount: number;
+    percentage: number;
+    icon: string;
+    color: string;
+  };
+  categories: CategorySummary[];
+}
+
+export interface Settings {
+  currency: string;
+  currencyPosition: 'prefix' | 'suffix';
+}
