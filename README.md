@@ -1,4 +1,4 @@
-# ExpenseTrack 📱💰
+# Fold : Daily Expense Tracker & Budget
 
 A production-quality, privacy-first mobile personal expense tracking application built with **React Native**, **Expo Router**, **TypeScript**, **SQLite** (`expo-sqlite`), and **Zustand**.
 
