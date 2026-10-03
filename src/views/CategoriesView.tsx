@@ -74,9 +74,9 @@ export const CategoriesView: React.FC<CategoriesViewProps> = ({
 
         <button
           onClick={onCreateCategory}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-2xl bg-[#B85D38] hover:bg-[#A24E2B] text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer self-start sm:self-auto"
         >
-          <Plus className="w-3.5 h-3.5 stroke-3" />
+          <Plus className="w-3.5 h-3.5 stroke-2" />
           New Category
         </button>
       </div>

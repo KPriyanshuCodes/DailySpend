@@ -16,6 +16,8 @@ interface ExpenseModalProps {
   currency: string;
   initialCategoryId?: string;
   onCreateCategory?: (data: { name: string; icon: string; color: string }) => Category;
+  title?: string;
+  subtitle?: string;
 }
 
 export const ExpenseModal: React.FC<ExpenseModalProps> = ({
@@ -27,6 +29,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   currency,
   initialCategoryId,
   onCreateCategory,
+  title,
+  subtitle,
 }) => {
   const [amountStr, setAmountStr] = useState<string>('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
@@ -155,20 +159,20 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/30 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-md bg-white/90 backdrop-blur-2xl rounded-3xl shadow-[0_20px_50px_rgba(28,25,23,0.12)] overflow-hidden border border-white/90 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200/50 bg-white/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 bg-white/60">
           <div>
-            <h2 className="text-lg font-extrabold text-stone-900 tracking-tight">
-              {editingExpense ? 'Edit Expense' : 'Add New Expense'}
+            <h2 className="text-base font-bold text-neutral-900 tracking-tight">
+              {title || (editingExpense ? 'Edit Expense' : 'Add New Expense')}
             </h2>
-            {editingExpense && (
-              <p className="text-[11px] text-stone-500 font-medium">
-                Adjust amount or use custom increment
+            {(subtitle || editingExpense) && (
+              <p className="text-[11px] text-neutral-500 font-normal">
+                {subtitle || 'Adjust amount or use custom increment'}
               </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full text-stone-400 hover:text-stone-800 hover:bg-stone-100/80 transition-colors cursor-pointer"
+            className="p-1.5 rounded-full text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -190,21 +194,21 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             />
           </div>
 
-          {/* Custom Increment Box in Soft Warm Cream Frosted Glass */}
-          <div className="bg-[#FAF4ED]/80 border border-[#ECD9C6] rounded-2xl p-4 flex flex-col gap-3 shadow-2xs">
+          {/* Custom Increment Box in Subtle Glass */}
+          <div className="bg-neutral-50/90 border border-neutral-200/80 rounded-2xl p-4 flex flex-col gap-3 shadow-2xs">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
-                <TrendingUp className="w-4 h-4 text-[#B85D38]" />
+              <label className="text-xs font-semibold text-neutral-900 uppercase tracking-wider flex items-center gap-1.5">
+                <TrendingUp className="w-4 h-4 text-neutral-800" />
                 Increase by (Custom Increment)
               </label>
-              <span className="text-[10px] font-bold text-[#B85D38] bg-white/90 px-2 py-0.5 rounded-full border border-[#ECD9C6]">
+              <span className="text-[10px] font-medium text-neutral-600 bg-white px-2 py-0.5 rounded-full border border-neutral-200">
                 Auto-adds to amount
               </span>
             </div>
 
-            <p className="text-xs text-stone-600 leading-relaxed font-normal">
+            <p className="text-xs text-neutral-600 leading-relaxed font-normal">
               Enter any amount to add to current expense{' '}
-              <span className="font-extrabold text-stone-900">
+              <span className="font-bold text-neutral-900">
                 ({formatCurrency(parsedCurrentAmount, currency)})
               </span>.
             </p>
@@ -212,7 +216,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             {/* Input and Add Button */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-extrabold text-[#B85D38] select-none">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-neutral-900 select-none font-mono">
                   +{currency}
                 </span>
                 <input
@@ -232,10 +236,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       handleApplyIncrement(false);
                     }
                   }}
-                  className={`w-full pl-9 pr-3 py-2 text-sm font-bold rounded-xl border bg-white/90 text-stone-900 placeholder:text-stone-400 focus:outline-none transition-colors ${
+                  className={`w-full pl-9 pr-3 py-2 text-sm font-bold rounded-xl border bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none transition-colors ${
                     incrementError
-                      ? 'border-rose-500 focus:border-rose-500'
-                      : 'border-[#ECD9C6] focus:border-[#B85D38]'
+                      ? 'border-neutral-900'
+                      : 'border-neutral-200 focus:border-neutral-900'
                   }`}
                 />
               </div>
@@ -243,9 +247,9 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               <button
                 type="button"
                 onClick={() => handleApplyIncrement(false)}
-                className="px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-[#B85D38] hover:bg-[#A24E2B] shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1 shrink-0"
               >
-                <Plus className="w-3.5 h-3.5 stroke-3" />
+                <Plus className="w-3.5 h-3.5 stroke-2" />
                 Add
               </button>
             </div>
@@ -262,7 +266,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     if (incrementError) setIncrementError('');
                     if (incrementSuccessMsg) setIncrementSuccessMsg('');
                   }}
-                  className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white hover:bg-stone-50 text-stone-800 border border-[#ECD9C6] shadow-2xs transition-colors cursor-pointer"
+                  className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white hover:bg-neutral-100 text-neutral-800 border border-neutral-200 shadow-2xs transition-colors cursor-pointer"
                 >
                   +{chip}
                 </button>
@@ -271,18 +275,18 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
             {/* Error Message */}
             {incrementError && (
-              <p className="text-xs font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+              <p className="text-xs font-medium text-neutral-800 bg-neutral-100 px-2.5 py-1 rounded-lg border border-neutral-200">
                 {incrementError}
               </p>
             )}
 
             {/* Live Calculation Preview */}
             {isValidIncrement && previewNewAmount !== null && (
-              <div className="text-xs font-bold text-stone-900 bg-white/80 p-2.5 rounded-xl border border-[#ECD9C6] flex items-center justify-between">
-                <span className="text-stone-600">
+              <div className="text-xs font-semibold text-neutral-900 bg-white p-2.5 rounded-xl border border-neutral-200 flex items-center justify-between font-mono">
+                <span className="text-neutral-600">
                   Current: {formatCurrency(parsedCurrentAmount, currency)} + {formatCurrency(parsedIncrement, currency)}
                 </span>
-                <span className="text-[#B85D38] font-extrabold text-sm">
+                <span className="text-neutral-900 font-bold text-sm">
                   ➔ New: {formatCurrency(previewNewAmount, currency)}
                 </span>
               </div>
@@ -290,8 +294,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
             {/* Success Feedback Banner */}
             {incrementSuccessMsg && (
-              <div className="text-xs font-bold text-stone-900 bg-white px-3 py-2 rounded-xl border border-[#ECD9C6] flex items-center gap-1.5 animate-in fade-in">
-                <Check className="w-4 h-4 text-[#B85D38] stroke-3 shrink-0" />
+              <div className="text-xs font-semibold text-neutral-900 bg-white px-3 py-2 rounded-xl border border-neutral-200 flex items-center gap-1.5 animate-in fade-in">
+                <Check className="w-4 h-4 text-neutral-900 stroke-2 shrink-0" />
                 <span>{incrementSuccessMsg}</span>
               </div>
             )}
@@ -300,21 +304,21 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           {/* Category Picker Section with Create Option */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
-              <label className="text-xs font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5 text-[#B85D38]" />
+              <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-neutral-700" />
                 Select Category
               </label>
               <div className="flex items-center gap-2">
                 {categoryError && (
-                  <span className="text-[11px] font-semibold text-rose-500">{categoryError}</span>
+                  <span className="text-[11px] font-medium text-neutral-800">{categoryError}</span>
                 )}
                 {onCreateCategory && (
                   <button
                     type="button"
                     onClick={() => setIsCreatingCategory(true)}
-                    className="text-xs font-bold text-[#B85D38] hover:text-[#A24E2B] bg-[#B85D38]/10 hover:bg-[#B85D38]/15 px-2.5 py-1 rounded-xl flex items-center gap-1 transition-colors cursor-pointer border border-[#B85D38]/20"
+                    className="text-xs font-semibold text-neutral-900 hover:text-black bg-neutral-100 hover:bg-neutral-200 px-2.5 py-1 rounded-xl flex items-center gap-1 transition-colors cursor-pointer border border-neutral-200"
                   >
-                    <Plus className="w-3.5 h-3.5 stroke-3" />
+                    <Plus className="w-3.5 h-3.5 stroke-2" />
                     <span>New Category</span>
                   </button>
                 )}
@@ -322,17 +326,17 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             </div>
 
             {visibleCategories.length === 0 ? (
-              <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-center flex flex-col items-center">
-                <p className="text-xs text-amber-900 font-semibold mb-2">
+              <div className="p-4 rounded-2xl bg-neutral-100 border border-neutral-200 text-center flex flex-col items-center">
+                <p className="text-xs text-neutral-700 font-medium mb-2">
                   No active categories available.
                 </p>
                 {onCreateCategory && (
                   <button
                     type="button"
                     onClick={() => setIsCreatingCategory(true)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#B85D38] hover:bg-[#A24E2B] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5 stroke-3" />
+                    <Plus className="w-3.5 h-3.5 stroke-2" />
                     Create First Category
                   </button>
                 )}
@@ -352,22 +356,18 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       }}
                       className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all text-center cursor-pointer ${
                         isSelected
-                          ? 'border-[#B85D38] bg-[#B85D38]/10 shadow-xs ring-1 ring-[#B85D38]'
-                          : 'border-stone-200/50 bg-white/70 hover:bg-white hover:border-stone-300'
+                          ? 'border-neutral-900 bg-neutral-100 shadow-xs ring-1 ring-neutral-900'
+                          : 'border-neutral-200/60 bg-white hover:bg-neutral-50'
                       }`}
                     >
                       <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5 transition-transform"
-                        style={{
-                          backgroundColor: `${cat.color}20`,
-                          color: cat.color,
-                        }}
+                        className="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5 transition-transform bg-neutral-100 border border-neutral-200/50 text-neutral-800"
                       >
-                        <CategoryIcon name={cat.icon} size={18} />
+                        <CategoryIcon name={cat.icon} size={16} />
                       </div>
                       <span
                         className={`text-xs font-semibold truncate w-full ${
-                          isSelected ? 'text-[#B85D38] font-extrabold' : 'text-stone-700'
+                          isSelected ? 'text-neutral-900 font-bold' : 'text-neutral-700'
                         }`}
                       >
                         {cat.name}
@@ -381,13 +381,13 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsCreatingCategory(true)}
-                    className="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-dashed border-stone-200 hover:border-[#B85D38] bg-white/40 hover:bg-[#B85D38]/5 text-stone-500 hover:text-[#B85D38] transition-all text-center cursor-pointer group"
+                    className="flex flex-col items-center justify-center p-2.5 rounded-2xl border border-dashed border-neutral-300 hover:border-neutral-900 bg-white hover:bg-neutral-50 text-neutral-500 hover:text-neutral-900 transition-all text-center cursor-pointer group"
                     title="Create another category"
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5 bg-white border border-stone-200 group-hover:border-[#B85D38]/40 text-stone-400 group-hover:text-[#B85D38] shadow-2xs transition-colors">
-                      <Plus className="w-4 h-4 stroke-3" />
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-1.5 bg-neutral-100 border border-neutral-200 text-neutral-500 group-hover:text-neutral-900 shadow-2xs transition-colors">
+                      <Plus className="w-4 h-4 stroke-2" />
                     </div>
-                    <span className="text-xs font-bold truncate w-full text-stone-600 group-hover:text-[#B85D38]">
+                    <span className="text-xs font-semibold truncate w-full text-neutral-600 group-hover:text-neutral-900">
                       + Add New
                     </span>
                   </button>
@@ -397,8 +397,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
             {/* Notification when a category is newly created */}
             {newlyCreatedCatName && (
-              <div className="mt-2 text-xs font-bold text-stone-900 bg-[#FAF4ED] px-3 py-1.5 rounded-xl border border-[#ECD9C6] flex items-center gap-1.5 animate-in fade-in">
-                <Check className="w-3.5 h-3.5 text-[#B85D38] stroke-3 shrink-0" />
+              <div className="mt-2 text-xs font-semibold text-neutral-900 bg-neutral-100 px-3 py-1.5 rounded-xl border border-neutral-200 flex items-center gap-1.5 animate-in fade-in">
+                <Check className="w-3.5 h-3.5 text-neutral-900 stroke-2 shrink-0" />
                 <span>Created & selected "{newlyCreatedCatName}"</span>
               </div>
             )}
@@ -407,12 +407,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           {/* Date Selector with Previous Date Support */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#B85D38]" />
+              <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-neutral-700" />
                 Expense Date
               </label>
               {date !== today && (
-                <span className="text-[10px] font-bold text-[#B85D38] bg-[#B85D38]/10 px-2 py-0.5 rounded-full border border-[#B85D38]/20">
+                <span className="text-[10px] font-semibold text-neutral-700 bg-neutral-100 px-2 py-0.5 rounded-full border border-neutral-200">
                   {date === yesterday ? 'Yesterday' : 'Past Date'}
                 </span>
               )}
@@ -426,10 +426,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     setDate(today);
                     if (dateError) setDateError('');
                   }}
-                  className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                  className={`px-3 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
                     date === today
-                      ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                      : 'bg-white/70 text-stone-600 border-stone-200/60 hover:bg-white'
+                      ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
+                      : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50'
                   }`}
                 >
                   Today
@@ -440,10 +440,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     setDate(yesterday);
                     if (dateError) setDateError('');
                   }}
-                  className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                  className={`px-3 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
                     date === yesterday
-                      ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                      : 'bg-white/70 text-stone-600 border-stone-200/60 hover:bg-white'
+                      ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
+                      : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50'
                   }`}
                 >
                   Yesterday
@@ -459,12 +459,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       setDate(e.target.value);
                       if (dateError) setDateError('');
                     }}
-                    className={`w-full px-3 py-1.5 text-xs font-bold rounded-xl border bg-white/80 text-stone-900 focus:outline-none transition-colors cursor-pointer ${
+                    className={`w-full px-3 py-1.5 text-xs font-semibold rounded-xl border bg-white text-neutral-900 focus:outline-none transition-colors cursor-pointer ${
                       dateError
-                        ? 'border-rose-500 text-rose-600'
+                        ? 'border-neutral-900'
                         : date !== today && date !== yesterday
-                        ? 'border-[#B85D38] ring-1 ring-[#B85D38]/25 text-[#B85D38]'
-                        : 'border-stone-200/80 focus:border-[#B85D38]'
+                        ? 'border-neutral-900 ring-1 ring-neutral-900/20 text-neutral-900'
+                        : 'border-neutral-200 focus:border-neutral-900'
                     }`}
                     title="Select any date"
                   />
@@ -473,36 +473,36 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
               {/* Dynamic date feedback */}
               <div className="flex flex-col gap-1 px-1">
-                <div className="flex items-center justify-between text-[11px] text-stone-500 font-medium">
+                <div className="flex items-center justify-between text-[11px] text-neutral-500 font-normal">
                   <span>
-                    Selected: <strong className="text-stone-800">{formatDateFull(date || today)}</strong>
+                    Selected: <strong className="text-neutral-900 font-semibold">{formatDateFull(date || today)}</strong>
                   </span>
                   {date === today && (
-                    <span className="text-emerald-700 font-semibold">Today's Spend</span>
+                    <span className="text-neutral-700 font-medium">Today's Spend</span>
                   )}
                 </div>
 
                 {/* Previous month indicator notice */}
                 {date && getMonthKey(date) !== getMonthKey() && (
-                  <div className="text-[11px] font-bold text-[#B85D38] bg-[#FAF4ED] border border-[#ECD9C6] px-2.5 py-1 rounded-xl flex items-center gap-1.5 animate-in fade-in">
-                    <Calendar className="w-3 h-3 shrink-0" />
+                  <div className="text-[11px] font-medium text-neutral-700 bg-neutral-100 border border-neutral-200 px-2.5 py-1 rounded-xl flex items-center gap-1.5 animate-in fade-in">
+                    <Calendar className="w-3 h-3 shrink-0 text-neutral-700" />
                     <span>
-                      Recording for {formatMonthLabel(getMonthKey(date))} (will appear in {formatMonthLabel(getMonthKey(date))} history & totals)
+                      Recording for {formatMonthLabel(getMonthKey(date))} (will appear in {formatMonthLabel(getMonthKey(date))} activity)
                     </span>
                   </div>
                 )}
               </div>
 
               {dateError && (
-                <p className="text-rose-500 text-xs font-semibold">{dateError}</p>
+                <p className="text-neutral-700 text-xs font-medium">{dateError}</p>
               )}
             </div>
           </div>
 
           {/* Optional Note */}
           <div>
-            <label className="text-xs font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-              <FileText className="w-3.5 h-3.5 text-[#B85D38]" />
+            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+              <FileText className="w-3.5 h-3.5 text-neutral-700" />
               Optional Note
             </label>
             <input
@@ -511,7 +511,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               maxLength={80}
-              className="w-full px-4 py-2.5 text-sm rounded-xl border border-stone-200/80 bg-white/70 text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-[#B85D38] focus:bg-white transition-colors"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border border-neutral-200 bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900 transition-colors"
             />
           </div>
 
@@ -520,16 +520,16 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 px-4 rounded-xl text-sm font-bold text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors cursor-pointer"
+              className="flex-1 py-3 px-4 rounded-xl text-sm font-semibold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={visibleCategories.length === 0}
-              className="flex-1 py-3 px-4 rounded-xl text-sm font-bold text-white bg-[#B85D38] hover:bg-[#A24E2B] disabled:opacity-40 disabled:pointer-events-none shadow-md shadow-[#B85D38]/20 transition-all active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-neutral-900 hover:bg-neutral-800 disabled:opacity-30 disabled:pointer-events-none shadow-xs transition-all active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <Check className="w-4 h-4" />
+              <Check className="w-4 h-4 stroke-2" />
               {editingExpense
                 ? `Update Expense (${formatCurrency(parsedCurrentAmount, currency)})`
                 : 'Save Expense'}

@@ -109,7 +109,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
               }}
               maxLength={30}
               className={`w-full px-4 py-2.5 text-sm rounded-xl border bg-white/80 text-stone-900 placeholder:text-stone-400 focus:outline-none focus:bg-white transition-colors ${
-                error ? 'border-rose-500' : 'border-stone-200/80 focus:border-[#B85D38]'
+                error ? 'border-neutral-900' : 'border-neutral-200/80 focus:border-neutral-900'
               }`}
               autoFocus
             />
@@ -177,7 +177,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 px-4 rounded-xl text-sm font-bold text-white bg-[#B85D38] hover:bg-[#A24E2B] shadow-md shadow-[#B85D38]/20 transition-all active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-neutral-900 hover:bg-neutral-800 shadow-xs transition-all active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Check className="w-4 h-4" />
               {editingCategory ? 'Update Category' : 'Create Category'}

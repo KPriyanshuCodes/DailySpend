@@ -2,65 +2,81 @@ import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   Tag,
-  PieChart,
+  Receipt,
+  Layers,
   Settings as SettingsIcon,
   Plus,
-  Wallet,
 } from 'lucide-react';
 import { runInitialMigrations } from '@/database/migrations';
 import { useCategoryStore } from '@/features/categories/categoryStore';
 import { useExpenseStore } from '@/features/expenses/expenseStore';
+import { useOtherExpenseStore } from '@/features/otherExpenses/otherExpenseStore';
 import { useSettingsStore } from '@/features/settings/settingsStore';
 import { calculateMonthlySummary } from '@/utils/calculations';
 import { expenseRepository } from '@/database/expenseRepository';
+import { otherExpenseRepository } from '@/database/otherExpenseRepository';
 import { Expense, Category } from '@/types';
 
 // Views
 import { DashboardView } from '@/views/DashboardView';
 import { CategoriesView } from '@/views/CategoriesView';
 import { SummaryView } from '@/views/SummaryView';
+import { OtherExpensesView } from '@/views/OtherExpensesView';
 import { SettingsView } from '@/views/SettingsView';
 
 // Modals
 import { ExpenseModal } from '@/components/ExpenseModal';
 import { CategoryModal } from '@/components/CategoryModal';
 import { CategoryHistoryModal } from '@/components/CategoryHistoryModal';
+import { ConfirmDeleteModal, DeleteTarget } from '@/components/ConfirmDeleteModal';
 import { AppLogo } from '@/components/AppLogo';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'categories' | 'summary' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'summary' | 'other' | 'categories' | 'settings'>('dashboard');
 
   // Stores
   const { categories, loadCategories, createCategory, updateCategory, toggleActive, deleteCategory, getUsageCount } =
     useCategoryStore();
   const { expenses, selectedMonthKey, loadExpenses, setSelectedMonthKey, addExpense, updateExpense, deleteExpense } =
     useExpenseStore();
+  const { otherExpenses, loadOtherExpenses, addOtherExpense, updateOtherExpense, deleteOtherExpense } =
+    useOtherExpenseStore();
   const { settings, setCurrency, resetAllData } = useSettingsStore();
 
-  // Modals state
+  // Modals state for regular expenses
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [initialCategoryIdForExpense, setInitialCategoryIdForExpense] = useState<string | undefined>(undefined);
 
+  // Modals state for OTHER expenses (completely isolated)
+  const [isOtherExpenseModalOpen, setIsOtherExpenseModalOpen] = useState(false);
+  const [editingOtherExpense, setEditingOtherExpense] = useState<Expense | null>(null);
+  const [initialCategoryIdForOtherExpense, setInitialCategoryIdForOtherExpense] = useState<string | undefined>(undefined);
+
+  // Category modal state
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   // Category Expense History modal state
   const [categoryForHistory, setCategoryForHistory] = useState<Category | null>(null);
 
+  // Safe In-App Deletion confirmation state
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+
   // Initialize DB on mount
   useEffect(() => {
     runInitialMigrations();
     loadCategories();
     loadExpenses();
+    loadOtherExpenses();
   }, []);
 
-  // Compute live aggregations for current selected month
+  // Compute live aggregations for current selected month (Only uses regular expenses!)
   const monthlySummary = calculateMonthlySummary(selectedMonthKey, expenses, categories);
   const currentMonthExpenses = expenses.filter((e) => e.monthKey === selectedMonthKey);
   const availableMonthKeys = expenseRepository.getAvailableMonthKeys();
 
-  // Handlers for expense
+  // Handlers for regular expense
   const handleOpenAddExpense = (catId?: string) => {
     setEditingExpense(null);
     setInitialCategoryIdForExpense(catId);
@@ -81,9 +97,52 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleDeleteExpense = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this expense record?')) {
-      deleteExpense(id);
+  const handleRequestDeleteExpense = (id: string) => {
+    const exp = expenses.find((e) => e.id === id);
+    if (exp) {
+      setDeleteTarget({
+        type: 'expense',
+        id: exp.id,
+        amount: exp.amount,
+        date: exp.date,
+        categoryName: exp.categoryName,
+        note: exp.note,
+      });
+    }
+  };
+
+  // Handlers for OTHER expense (isolated from monthly calculations)
+  const handleOpenAddOtherExpense = (catId?: string) => {
+    setEditingOtherExpense(null);
+    setInitialCategoryIdForOtherExpense(catId);
+    setIsOtherExpenseModalOpen(true);
+  };
+
+  const handleOpenEditOtherExpense = (expense: Expense) => {
+    setEditingOtherExpense(expense);
+    setInitialCategoryIdForOtherExpense(undefined);
+    setIsOtherExpenseModalOpen(true);
+  };
+
+  const handleSaveOtherExpense = (data: { amount: number; categoryId: string; date: string; note?: string }) => {
+    if (editingOtherExpense) {
+      updateOtherExpense(editingOtherExpense.id, data);
+    } else {
+      addOtherExpense(data);
+    }
+  };
+
+  const handleRequestDeleteOtherExpense = (id: string) => {
+    const exp = otherExpenses.find((e) => e.id === id);
+    if (exp) {
+      setDeleteTarget({
+        type: 'other_expense',
+        id: exp.id,
+        amount: exp.amount,
+        date: exp.date,
+        categoryName: exp.categoryName,
+        note: exp.note,
+      });
     }
   };
 
@@ -101,7 +160,6 @@ export const App: React.FC = () => {
   const handleSaveCategory = (data: { name: string; icon: string; color: string }) => {
     if (editingCategory) {
       updateCategory(editingCategory.id, data);
-      // If currently viewing history for this category, keep it updated
       if (categoryForHistory && categoryForHistory.id === editingCategory.id) {
         setCategoryForHistory({ ...categoryForHistory, ...data });
       }
@@ -110,13 +168,37 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleDeleteCategory = (id: string) => {
-    const res = deleteCategory(id);
-    if (!res.success && res.error) {
-      alert(res.error);
-    } else if (categoryForHistory && categoryForHistory.id === id) {
-      setCategoryForHistory(null);
+  const handleRequestDeleteCategory = (id: string) => {
+    const cat = categories.find((c) => c.id === id);
+    if (cat) {
+      setDeleteTarget({
+        type: 'category',
+        id: cat.id,
+        name: cat.name,
+        usageCount: getUsageCount(cat.id),
+      });
     }
+  };
+
+  // Safe confirmed deletion execution
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+
+    if (deleteTarget.type === 'expense') {
+      deleteExpense(deleteTarget.id);
+    } else if (deleteTarget.type === 'other_expense') {
+      deleteOtherExpense(deleteTarget.id);
+    } else if (deleteTarget.type === 'category') {
+      deleteCategory(deleteTarget.id);
+      // Reload both expense collections so reassigned expenses reflect immediately
+      loadExpenses();
+      loadOtherExpenses();
+      if (categoryForHistory && categoryForHistory.id === deleteTarget.id) {
+        setCategoryForHistory(null);
+      }
+    }
+
+    setDeleteTarget(null);
   };
 
   const handleOpenCategoryHistory = (cat: Category) => {
@@ -132,30 +214,42 @@ export const App: React.FC = () => {
 
   const hasActiveCategories = categories.some((c) => c.isActive);
 
+  // Other Expenses aggregations
+  const otherCategoryTotals = otherExpenseRepository.getCategoryTotals(otherExpenses);
+  const totalOtherAmount = otherExpenses.reduce((sum, e) => sum + e.amount, 0);
+
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-stone-900 flex justify-center selection:bg-[#B85D38] selection:text-white relative overflow-x-hidden">
-      {/* Subtle warm ambient background glow for glassmorphism */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-96 bg-gradient-to-b from-amber-100/30 via-orange-50/15 to-transparent pointer-events-none blur-3xl -z-10" />
+    <div className="min-h-screen bg-[#F6F6F8] text-neutral-900 flex justify-center selection:bg-neutral-900 selection:text-white relative overflow-x-hidden">
+      {/* Subtle ambient glass backlight */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-96 bg-gradient-to-b from-white via-neutral-100/40 to-transparent pointer-events-none blur-3xl -z-10" />
 
       {/* Main Container */}
-      <div className="w-full max-w-lg min-h-screen bg-[#FAF8F5]/80 border-x border-stone-200/50 flex flex-col relative shadow-[0_10px_40px_rgba(28,25,23,0.03)] backdrop-blur-2xl">
+      <div className="w-full max-w-lg min-h-screen bg-[#F6F6F8]/80 border-x border-neutral-200/50 flex flex-col relative shadow-[0_10px_40px_rgba(0,0,0,0.02)] backdrop-blur-2xl">
         {/* Top Header with Light Glass */}
-        <header className="sticky top-0 z-30 bg-white/75 backdrop-blur-xl border-b border-stone-200/50 px-5 py-3.5 flex items-center justify-between">
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-neutral-200/60 px-5 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <AppLogo className="w-9 h-9 shadow-xs" />
             <div>
-              <h1 className="text-base font-extrabold text-stone-900 tracking-tight leading-tight">
-                DailySpend
+              <h1 className="text-base font-extrabold text-neutral-900 tracking-tight leading-tight lowercase">
+                flow
               </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => (hasActiveCategories ? handleOpenAddExpense() : handleOpenAddCategory())}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#B85D38] hover:bg-[#A24E2B] text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
+              onClick={() => {
+                if (!hasActiveCategories) {
+                  handleOpenAddCategory();
+                } else if (activeTab === 'other') {
+                  handleOpenAddOtherExpense();
+                } else {
+                  handleOpenAddExpense();
+                }
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 stroke-3" />
+              <Plus className="w-3.5 h-3.5 stroke-2" />
               <span>{hasActiveCategories ? 'Add' : 'New Cat'}</span>
             </button>
           </div>
@@ -172,24 +266,13 @@ export const App: React.FC = () => {
               onSelectMonth={setSelectedMonthKey}
               availableMonthKeys={availableMonthKeys}
               hasCategories={hasActiveCategories}
-              onAddExpense={() => handleOpenAddExpense()}
+              categories={categories}
+              onAddExpense={(catId) => handleOpenAddExpense(catId)}
               onEditExpense={handleOpenEditExpense}
-              onDeleteExpense={handleDeleteExpense}
+              onDeleteExpense={handleRequestDeleteExpense}
               onNavigateToSummary={() => setActiveTab('summary')}
               onNavigateToCategories={() => setActiveTab('categories')}
               onViewCategoryHistory={handleOpenCategoryHistoryById}
-            />
-          )}
-
-          {activeTab === 'categories' && (
-            <CategoriesView
-              categories={categories}
-              getUsageCount={getUsageCount}
-              onCreateCategory={handleOpenAddCategory}
-              onEditCategory={handleOpenEditCategory}
-              onToggleActive={toggleActive}
-              onDeleteCategory={handleDeleteCategory}
-              onViewHistory={handleOpenCategoryHistory}
             />
           )}
 
@@ -202,8 +285,34 @@ export const App: React.FC = () => {
               onSelectMonth={setSelectedMonthKey}
               availableMonthKeys={availableMonthKeys}
               onEditExpense={handleOpenEditExpense}
-              onDeleteExpense={handleDeleteExpense}
+              onDeleteExpense={handleRequestDeleteExpense}
               onViewCategoryHistory={handleOpenCategoryHistoryById}
+            />
+          )}
+
+          {activeTab === 'other' && (
+            <OtherExpensesView
+              otherExpenses={otherExpenses}
+              categories={categories}
+              currency={settings.currency}
+              categoryTotals={otherCategoryTotals}
+              totalAmount={totalOtherAmount}
+              onAddOtherExpense={(catId) => handleOpenAddOtherExpense(catId)}
+              onEditOtherExpense={handleOpenEditOtherExpense}
+              onDeleteOtherExpense={handleRequestDeleteOtherExpense}
+              onCreateCategory={handleOpenAddCategory}
+            />
+          )}
+
+          {activeTab === 'categories' && (
+            <CategoriesView
+              categories={categories}
+              getUsageCount={getUsageCount}
+              onCreateCategory={handleOpenAddCategory}
+              onEditCategory={handleOpenEditCategory}
+              onToggleActive={toggleActive}
+              onDeleteCategory={handleRequestDeleteCategory}
+              onViewHistory={handleOpenCategoryHistory}
             />
           )}
 
@@ -214,18 +323,19 @@ export const App: React.FC = () => {
               onResetAllData={resetAllData}
               categories={categories}
               expenses={expenses}
+              otherExpenses={otherExpenses}
             />
           )}
         </main>
 
-        {/* Bottom Navigation Bar with Light Glass */}
-        <nav className="sticky bottom-0 z-30 bg-white/80 backdrop-blur-xl border-t border-stone-200/50 px-3 py-2 flex items-center justify-around shadow-[0_-4px_24px_rgba(28,25,23,0.02)]">
+        {/* Bottom Navigation Bar with 5 destinations */}
+        <nav className="sticky bottom-0 z-30 bg-white/80 backdrop-blur-xl border-t border-neutral-200/60 px-2 py-2 flex items-center justify-around shadow-[0_-4px_24px_rgba(0,0,0,0.02)]">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-2xl transition-all cursor-pointer ${
+            className={`flex flex-col items-center gap-1 py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer ${
               activeTab === 'dashboard'
-                ? 'text-[#B85D38] font-bold scale-105'
-                : 'text-stone-400 hover:text-stone-600 font-medium'
+                ? 'text-neutral-900 font-bold scale-105'
+                : 'text-neutral-400 hover:text-neutral-600 font-medium'
             }`}
           >
             <LayoutDashboard className="w-5 h-5" />
@@ -234,22 +344,34 @@ export const App: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('summary')}
-            className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-2xl transition-all cursor-pointer ${
+            className={`flex flex-col items-center gap-1 py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer ${
               activeTab === 'summary'
-                ? 'text-[#B85D38] font-bold scale-105'
-                : 'text-stone-400 hover:text-stone-600 font-medium'
+                ? 'text-neutral-900 font-bold scale-105'
+                : 'text-neutral-400 hover:text-neutral-600 font-medium'
             }`}
           >
-            <PieChart className="w-5 h-5" />
-            <span className="text-[10px] tracking-tight">Analytics</span>
+            <Receipt className="w-5 h-5" />
+            <span className="text-[10px] tracking-tight">Activity</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('other')}
+            className={`flex flex-col items-center gap-1 py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer ${
+              activeTab === 'other'
+                ? 'text-neutral-900 font-bold scale-105'
+                : 'text-neutral-400 hover:text-neutral-600 font-medium'
+            }`}
+          >
+            <Layers className="w-5 h-5" />
+            <span className="text-[10px] tracking-tight">Other</span>
           </button>
 
           <button
             onClick={() => setActiveTab('categories')}
-            className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-2xl transition-all cursor-pointer ${
+            className={`flex flex-col items-center gap-1 py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer ${
               activeTab === 'categories'
-                ? 'text-[#B85D38] font-bold scale-105'
-                : 'text-stone-400 hover:text-stone-600 font-medium'
+                ? 'text-neutral-900 font-bold scale-105'
+                : 'text-neutral-400 hover:text-neutral-600 font-medium'
             }`}
           >
             <Tag className="w-5 h-5" />
@@ -258,10 +380,10 @@ export const App: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('settings')}
-            className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-2xl transition-all cursor-pointer ${
+            className={`flex flex-col items-center gap-1 py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer ${
               activeTab === 'settings'
-                ? 'text-[#B85D38] font-bold scale-105'
-                : 'text-stone-400 hover:text-stone-600 font-medium'
+                ? 'text-neutral-900 font-bold scale-105'
+                : 'text-neutral-400 hover:text-neutral-600 font-medium'
             }`}
           >
             <SettingsIcon className="w-5 h-5" />
@@ -269,7 +391,7 @@ export const App: React.FC = () => {
           </button>
         </nav>
 
-        {/* Expense Modal */}
+        {/* Regular Expense Modal */}
         <ExpenseModal
           isOpen={isExpenseModalOpen}
           onClose={() => setIsExpenseModalOpen(false)}
@@ -279,6 +401,20 @@ export const App: React.FC = () => {
           currency={settings.currency}
           initialCategoryId={initialCategoryIdForExpense}
           onCreateCategory={createCategory}
+        />
+
+        {/* OTHER Expense Modal (Totally isolated) */}
+        <ExpenseModal
+          isOpen={isOtherExpenseModalOpen}
+          onClose={() => setIsOtherExpenseModalOpen(false)}
+          onSave={handleSaveOtherExpense}
+          categories={categories}
+          editingExpense={editingOtherExpense}
+          currency={settings.currency}
+          initialCategoryId={initialCategoryIdForOtherExpense}
+          onCreateCategory={createCategory}
+          title={editingOtherExpense ? 'Edit Other Expense' : 'Add Other Expense'}
+          subtitle="Recorded separately · Excluded from monthly budget"
         />
 
         {/* Category Modal */}
@@ -298,7 +434,15 @@ export const App: React.FC = () => {
           currency={settings.currency}
           onAddExpenseForCategory={(catId) => handleOpenAddExpense(catId)}
           onEditExpense={handleOpenEditExpense}
-          onDeleteExpense={handleDeleteExpense}
+          onDeleteExpense={handleRequestDeleteExpense}
+        />
+
+        {/* In-App Deletion Confirmation Modal */}
+        <ConfirmDeleteModal
+          target={deleteTarget}
+          currency={settings.currency}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteTarget(null)}
         />
       </div>
     </div>

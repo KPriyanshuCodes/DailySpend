@@ -104,16 +104,16 @@ export const CategoryHistoryModal: React.FC<CategoryHistoryModalProps> = ({
 
         {/* Action: Add Expense for this category */}
         {category.isActive && onAddExpenseForCategory && (
-          <div className="px-5 py-3 border-b border-stone-200/50 bg-[#FAF8F5]/60 flex items-center justify-between">
-            <span className="text-xs text-stone-500 font-medium">Log a new purchase:</span>
+          <div className="px-5 py-3 border-b border-neutral-100 bg-[#F6F6F8]/60 flex items-center justify-between">
+            <span className="text-xs text-neutral-500 font-medium">Log a new purchase:</span>
             <button
               onClick={() => {
                 onClose();
                 onAddExpenseForCategory(category.id);
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#B85D38] hover:bg-[#A24E2B] text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 stroke-3" />
+              <Plus className="w-3.5 h-3.5 stroke-2" />
               Add Expense
             </button>
           </div>

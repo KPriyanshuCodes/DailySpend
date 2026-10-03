@@ -1,5 +1,5 @@
 {
-  "name": "DailySpend - Personal Expense Tracker",
+  "name": "flow - Personal Expense Tracker",
   "description": "A privacy-first mobile personal expense tracking web application with monthly isolation, SQLite/IndexedDB persistence, customizable categories, and analytics.",
   "permissions": [],
   "capabilities": [
